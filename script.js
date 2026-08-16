@@ -9,6 +9,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   async function detectPresentations() {
     try {
+
       const response = await fetch(GITHUB_API_URL, {
         cache: "no-store"
       });
@@ -35,77 +36,93 @@ document.addEventListener("DOMContentLoaded", () => {
         .filter(Boolean)
         .sort((a, b) => a.number - b.number);
 
-      console.log("Presentacions detectades:", presentations);
-
       presentations.forEach(presentation => {
 
-        const number = String(presentation.number).padStart(2, "0");
+        const number =
+          String(presentation.number).padStart(2, "0");
 
-        const topicNumbers = document.querySelectorAll(".topic .num");
+        document.querySelectorAll(".topic .num").forEach(numberElement => {
 
-        topicNumbers.forEach(numberElement => {
-
-          const topicNumber = numberElement.textContent.trim();
+          const topicNumber =
+            numberElement.textContent.trim();
 
           if (topicNumber !== number) {
             return;
           }
 
-          const topic = numberElement.closest(".topic");
+          const topic =
+            numberElement.closest(".topic");
 
-          if (!topic) {
-            return;
-          }
-
-          if (!topic.classList.contains("soon")) {
+          if (!topic || !topic.classList.contains("soon")) {
             return;
           }
 
           topic.classList.remove("soon");
           topic.classList.add("available");
 
-          const link = document.createElement("a");
+          const link =
+            document.createElement("a");
 
-          link.className = topic.className;
-          link.href = presentation.filename;
+          link.className =
+            topic.className;
+
+          link.href =
+            presentation.filename;
 
           while (topic.firstChild) {
             link.appendChild(topic.firstChild);
           }
 
-          const status = link.querySelector("em");
+          const status =
+            link.querySelector("em");
 
           if (status) {
-            status.textContent = "DISPONIBLE";
+            status.textContent =
+              "DISPONIBLE";
           }
 
-          const arrow = link.querySelector("b");
+          const subtitle =
+            link.querySelector("small");
+
+          if (subtitle) {
+            subtitle.textContent =
+              "Presentació disponible";
+          }
+
+          const arrow =
+            link.querySelector("b");
 
           if (arrow) {
-            arrow.textContent = "↗";
+            arrow.textContent =
+              "↗";
           }
 
-          topic.parentNode.replaceChild(link, topic);
+          topic.parentNode.replaceChild(
+            link,
+            topic
+          );
 
         });
 
       });
 
       updateAvailableCount();
-
       updateHeroCount();
 
     } catch (error) {
+
       console.warn(
         "No s'han pogut detectar les presentacions:",
         error
       );
+
     }
   }
 
   function updateAvailableCount() {
 
-    const block = document.querySelector("#bloc-01");
+    const block =
+      document.querySelector("#bloc-01");
 
     if (!block) {
       return;
@@ -128,7 +145,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function updateHeroCount() {
 
-    const hero = document.querySelector(".hero aside");
+    const hero =
+      document.querySelector(".hero aside");
 
     if (!hero) {
       return;
@@ -137,7 +155,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const availableTopics =
       document.querySelectorAll(".topic.available");
 
-    const numbers = hero.querySelectorAll("b");
+    const numbers =
+      hero.querySelectorAll("b");
 
     if (numbers.length >= 3) {
       numbers[2].textContent =
