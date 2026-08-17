@@ -24,14 +24,16 @@ document.addEventListener("DOMContentLoaded", () => {
       const presentations = files
         .filter(file =>
           file.type === "file" &&
-          /^\d+_.+\.html$/i.test(file.name)
+          /^B[1-4]_\d+_.+\.html$/i.test(file.name)
         )
         .map(file => {
 
-          const match = file.name.match(/^(\d+)_/);
+          const match =
+            file.name.match(/^B([1-4])_(\d+)_/);
 
           return {
-            number: parseInt(match[1], 10),
+            block: parseInt(match[1], 10),
+            number: parseInt(match[2], 10),
             filename: file.name
           };
 
@@ -40,33 +42,49 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
       /*
-       * IMPORTANT:
-       * Només busquem presentacions dins del BLOC 1.
-       * Això evita activar per error els temes
-       * dels Blocs 2, 3 i 4.
+       * Recorrem els quatre blocs.
        */
-
-      const block1 =
-        document.querySelector("#bloc-01");
-
-      if (!block1) {
-        return;
-      }
-
 
       presentations.forEach(presentation => {
 
-        const number =
+        const blockNumber =
+          String(presentation.block).padStart(2, "0");
+
+        const topicNumber =
           String(presentation.number).padStart(2, "0");
 
 
+        /*
+         * Busquem el bloc corresponent.
+         */
+
+        const block =
+          document.querySelector(
+            `#bloc-${blockNumber}`
+          );
+
+
+        if (!block) {
+          return;
+        }
+
+
+        /*
+         * Busquem el tema dins d'aquest bloc.
+         */
+
         const numberElements =
-          block1.querySelectorAll(".topic .num");
+          block.querySelectorAll(
+            ".topic .num"
+          );
 
 
         numberElements.forEach(numberElement => {
 
-          if (numberElement.textContent.trim() !== number) {
+          if (
+            numberElement.textContent.trim() !==
+            topicNumber
+          ) {
             return;
           }
 
@@ -82,20 +100,25 @@ document.addEventListener("DOMContentLoaded", () => {
 
           /*
            * Si ja està disponible,
-           * no el modifiquem.
+           * no el tornem a modificar.
            */
 
-          if (topic.classList.contains("available")) {
+          if (
+            topic.classList.contains(
+              "available"
+            )
+          ) {
             return;
           }
 
 
           /*
-           * Convertim el tema de "PROPERAMENT"
-           * a "DISPONIBLE".
+           * Convertim "PROPERAMENT"
+           * en "DISPONIBLE".
            */
 
           topic.classList.remove("soon");
+
           topic.classList.add("available");
 
 
@@ -114,17 +137,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
           /*
-           * Movem tot el contingut del tema
+           * Movem tot el contingut
            * dins de l'enllaç.
            */
 
           while (topic.firstChild) {
-            link.appendChild(topic.firstChild);
+            link.appendChild(
+              topic.firstChild
+            );
           }
 
 
           /*
-           * Canviem l'estat.
+           * Actualitzem l'estat.
            */
 
           const status =
@@ -137,7 +162,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
           /*
-           * Canviem el text petit.
+           * Actualitzem el text petit.
            */
 
           const subtitle =
@@ -150,7 +175,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
           /*
-           * Canviem la fletxa.
+           * Actualitzem la fletxa.
+
            */
 
           const arrow =
@@ -177,7 +203,8 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
 
-      updateCounters(block1);
+      updateCounters();
+
 
     } catch (error) {
 
@@ -191,39 +218,63 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
 
-  function updateCounters(block1) {
+  /*
+   * ==========================================================
+   * ACTUALITZAR COMPTADORS
+   * ==========================================================
+   */
 
-    const available =
-      block1.querySelectorAll(
-        ".topic.available"
-      ).length;
-
-
-    const total =
-      block1.querySelectorAll(
-        ".topic"
-      ).length;
-
+  function updateCounters() {
 
     /*
-     * Actualitzem només el text del Bloc 1.
+     * Comptador de cada bloc.
      */
 
-    const description =
-      block1.querySelector(
-        ".body > p"
-      );
+    for (
+      let blockNumber = 1;
+      blockNumber <= 4;
+      blockNumber++
+    ) {
+
+      const block =
+        document.querySelector(
+          `#bloc-${String(blockNumber).padStart(2, "0")}`
+        );
 
 
-    if (description) {
-      description.textContent =
-        `${available} de ${total} temes disponibles.`;
+      if (!block) {
+        continue;
+      }
+
+
+      const available =
+        block.querySelectorAll(
+          ".topic.available"
+        ).length;
+
+
+      const total =
+        block.querySelectorAll(
+          ".topic"
+        ).length;
+
+
+      const description =
+        block.querySelector(
+          ".body > p"
+        );
+
+
+      if (description) {
+        description.textContent =
+          `${available} de ${total} temes disponibles.`;
+      }
+
     }
 
 
     /*
-     * Actualitzem el número de temes disponibles
-     * de la capçalera principal.
+     * Comptador general de la portada.
      */
 
     const hero =
@@ -233,6 +284,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     if (hero) {
+
+      const available =
+        document.querySelectorAll(
+          ".topic.available"
+        ).length;
+
 
       const numbers =
         hero.querySelectorAll("b");
@@ -249,7 +306,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
   /*
-   * Navegació suau pels enllaços interns.
+   * ==========================================================
+   * NAVEGACIÓ SUAU
+   * ==========================================================
    */
 
   const navigationLinks =
@@ -302,7 +361,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
   /*
-   * Iniciem la detecció automàtica.
+   * ==========================================================
+   * INICIAR DETECCIÓ AUTOMÀTICA
+   * ==========================================================
    */
 
   detectPresentations();
