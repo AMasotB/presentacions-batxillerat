@@ -49,19 +49,15 @@ document.addEventListener("DOMContentLoaded", () => {
         const topicNumber =
           String(presentation.number).padStart(2, "0");
 
-
         const block =
           document.querySelector(blockId);
-
 
         if (!block) {
           return;
         }
 
-
         const numberElements =
           block.querySelectorAll(".topic .num");
-
 
         numberElements.forEach(numberElement => {
 
@@ -72,38 +68,72 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
           }
 
-
           const topic =
             numberElement.closest(".topic");
-
 
           if (!topic) {
             return;
           }
 
 
-          if (
-            topic.classList.contains("available")
-          ) {
+          /*
+           * CORRECCIÓ IMPORTANT:
+           * Si el tema ja és un enllaç, actualitzem
+           * directament el seu href.
+           */
+
+          if (topic.tagName.toLowerCase() === "a") {
+
+            topic.href =
+              presentation.filename;
+
+            topic.classList.remove("soon");
+            topic.classList.add("available");
+
+            const status =
+              topic.querySelector("em");
+
+            if (status) {
+              status.textContent =
+                "DISPONIBLE";
+            }
+
+            const subtitle =
+              topic.querySelector("small");
+
+            if (subtitle) {
+              subtitle.textContent =
+                "Presentació disponible";
+            }
+
+            const arrow =
+              topic.querySelector("b");
+
+            if (arrow) {
+              arrow.textContent =
+                "↗";
+            }
+
             return;
           }
 
 
+          /*
+           * Si és un div normal, el convertim
+           * en un enllaç.
+           */
+
           topic.classList.remove("soon");
           topic.classList.add("available");
-
 
           const link =
             document.createElement("a");
 
-
           link.className =
             topic.className;
 
-
           link.href =
             presentation.filename;
-
 
           while (topic.firstChild) {
             link.appendChild(
@@ -115,7 +145,6 @@ document.addEventListener("DOMContentLoaded", () => {
           const status =
             link.querySelector("em");
 
-
           if (status) {
             status.textContent =
               "DISPONIBLE";
@@ -125,7 +154,6 @@ document.addEventListener("DOMContentLoaded", () => {
           const subtitle =
             link.querySelector("small");
 
-
           if (subtitle) {
             subtitle.textContent =
               "Presentació disponible";
@@ -134,7 +162,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
           const arrow =
             link.querySelector("b");
-
 
           if (arrow) {
             arrow.textContent =
@@ -182,7 +209,6 @@ document.addEventListener("DOMContentLoaded", () => {
         document.querySelector(
           `#bloc-${String(blockNumber).padStart(2, "0")}`
         );
-
 
       if (!block) {
         continue;
