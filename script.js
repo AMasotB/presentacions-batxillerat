@@ -41,27 +41,17 @@ document.addEventListener("DOMContentLoaded", () => {
         .filter(Boolean);
 
 
-      /*
-       * Recorrem els quatre blocs.
-       */
-
       presentations.forEach(presentation => {
 
-        const blockNumber =
-          String(presentation.block).padStart(2, "0");
+        const blockId =
+          `#bloc-${String(presentation.block).padStart(2, "0")}`;
 
         const topicNumber =
           String(presentation.number).padStart(2, "0");
 
 
-        /*
-         * Busquem el bloc corresponent.
-         */
-
         const block =
-          document.querySelector(
-            `#bloc-${blockNumber}`
-          );
+          document.querySelector(blockId);
 
 
         if (!block) {
@@ -69,14 +59,8 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
 
-        /*
-         * Busquem el tema dins d'aquest bloc.
-         */
-
         const numberElements =
-          block.querySelectorAll(
-            ".topic .num"
-          );
+          block.querySelectorAll(".topic .num");
 
 
         numberElements.forEach(numberElement => {
@@ -98,48 +82,28 @@ document.addEventListener("DOMContentLoaded", () => {
           }
 
 
-          /*
-           * Si ja està disponible,
-           * no el tornem a modificar.
-           */
-
           if (
-            topic.classList.contains(
-              "available"
-            )
+            topic.classList.contains("available")
           ) {
             return;
           }
 
 
-          /*
-           * Convertim "PROPERAMENT"
-           * en "DISPONIBLE".
-           */
-
           topic.classList.remove("soon");
-
           topic.classList.add("available");
 
-
-          /*
-           * Creem l'enllaç.
-           */
 
           const link =
             document.createElement("a");
 
+
           link.className =
             topic.className;
+
 
           link.href =
             presentation.filename;
 
-
-          /*
-           * Movem tot el contingut
-           * dins de l'enllaç.
-           */
 
           while (topic.firstChild) {
             link.appendChild(
@@ -148,12 +112,9 @@ document.addEventListener("DOMContentLoaded", () => {
           }
 
 
-          /*
-           * Actualitzem l'estat.
-           */
-
           const status =
             link.querySelector("em");
+
 
           if (status) {
             status.textContent =
@@ -161,12 +122,9 @@ document.addEventListener("DOMContentLoaded", () => {
           }
 
 
-          /*
-           * Actualitzem el text petit.
-           */
-
           const subtitle =
             link.querySelector("small");
+
 
           if (subtitle) {
             subtitle.textContent =
@@ -174,24 +132,15 @@ document.addEventListener("DOMContentLoaded", () => {
           }
 
 
-          /*
-           * Actualitzem la fletxa.
-
-           */
-
           const arrow =
             link.querySelector("b");
+
 
           if (arrow) {
             arrow.textContent =
               "↗";
           }
 
-
-          /*
-           * Substituïm el tema original
-           * pel nou enllaç.
-           */
 
           topic.parentNode.replaceChild(
             link,
@@ -218,17 +167,10 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
 
-  /*
-   * ==========================================================
-   * ACTUALITZAR COMPTADORS
-   * ==========================================================
-   */
-
   function updateCounters() {
 
-    /*
-     * Comptador de cada bloc.
-     */
+    let totalAvailable = 0;
+
 
     for (
       let blockNumber = 1;
@@ -259,6 +201,9 @@ document.addEventListener("DOMContentLoaded", () => {
         ).length;
 
 
+      totalAvailable += available;
+
+
       const description =
         block.querySelector(
           ".body > p"
@@ -273,10 +218,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
 
-    /*
-     * Comptador general de la portada.
-     */
-
     const hero =
       document.querySelector(
         ".hero aside"
@@ -285,31 +226,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (hero) {
 
-      const available =
-        document.querySelectorAll(
-          ".topic.available"
-        ).length;
-
-
       const numbers =
         hero.querySelectorAll("b");
 
 
       if (numbers.length >= 3) {
         numbers[2].textContent =
-          available;
+          totalAvailable;
       }
 
     }
 
   }
 
-
-  /*
-   * ==========================================================
-   * NAVEGACIÓ SUAU
-   * ==========================================================
-   */
 
   const navigationLinks =
     document.querySelectorAll(
@@ -359,12 +288,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   });
 
-
-  /*
-   * ==========================================================
-   * INICIAR DETECCIÓ AUTOMÀTICA
-   * ==========================================================
-   */
 
   detectPresentations();
 
