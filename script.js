@@ -8,6 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
     `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPOSITORY}/contents/?ref=${GITHUB_BRANCH}`;
 
   async function detectPresentations() {
+
     try {
 
       const response = await fetch(GITHUB_API_URL, {
@@ -15,7 +16,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       if (!response.ok) {
-        throw new Error(`GitHub ha retornat l'error ${response.status}`);
+        throw new Error(`GitHub error ${response.status}`);
       }
 
       const files = await response.json();
@@ -26,39 +27,81 @@ document.addEventListener("DOMContentLoaded", () => {
           /^\d+_.+\.html$/i.test(file.name)
         )
         .map(file => {
+
           const match = file.name.match(/^(\d+)_/);
 
           return {
             number: parseInt(match[1], 10),
             filename: file.name
           };
+
         })
-        .filter(Boolean)
-        .sort((a, b) => a.number - b.number);
+        .filter(Boolean);
+
+
+      /*
+       * IMPORTANT:
+       * Només busquem presentacions dins del BLOC 1.
+       * Això evita activar per error els temes
+       * dels Blocs 2, 3 i 4.
+       */
+
+      const block1 =
+        document.querySelector("#bloc-01");
+
+      if (!block1) {
+        return;
+      }
+
 
       presentations.forEach(presentation => {
 
         const number =
           String(presentation.number).padStart(2, "0");
 
-        document.querySelectorAll(".topic .num").forEach(numberElement => {
 
-          const topicNumber =
-            numberElement.textContent.trim();
+        const numberElements =
+          block1.querySelectorAll(".topic .num");
 
-          if (topicNumber !== number) {
+
+        numberElements.forEach(numberElement => {
+
+          if (numberElement.textContent.trim() !== number) {
             return;
           }
+
 
           const topic =
             numberElement.closest(".topic");
 
-          if (!topic || !topic.classList.contains("soon")) {
+
+          if (!topic) {
             return;
           }
 
+
+          /*
+           * Si ja està disponible,
+           * no el modifiquem.
+           */
+
+          if (topic.classList.contains("available")) {
+            return;
+          }
+
+
+          /*
+           * Convertim el tema de "PROPERAMENT"
+           * a "DISPONIBLE".
+           */
+
           topic.classList.remove("soon");
           topic.classList.add("available");
+
+
+          /*
+           * Creem l'enllaç.
+           */
 
           const link =
             document.createElement("a");
@@ -69,9 +112,20 @@ document.addEventListener("DOMContentLoaded", () => {
           link.href =
             presentation.filename;
 
+
+          /*
+           * Movem tot el contingut del tema
+           * dins de l'enllaç.
+           */
+
           while (topic.firstChild) {
             link.appendChild(topic.firstChild);
           }
+
+
+          /*
+           * Canviem l'estat.
+           */
 
           const status =
             link.querySelector("em");
@@ -81,6 +135,11 @@ document.addEventListener("DOMContentLoaded", () => {
               "DISPONIBLE";
           }
 
+
+          /*
+           * Canviem el text petit.
+           */
+
           const subtitle =
             link.querySelector("small");
 
@@ -89,6 +148,11 @@ document.addEventListener("DOMContentLoaded", () => {
               "Presentació disponible";
           }
 
+
+          /*
+           * Canviem la fletxa.
+           */
+
           const arrow =
             link.querySelector("b");
 
@@ -96,6 +160,12 @@ document.addEventListener("DOMContentLoaded", () => {
             arrow.textContent =
               "↗";
           }
+
+
+          /*
+           * Substituïm el tema original
+           * pel nou enllaç.
+           */
 
           topic.parentNode.replaceChild(
             link,
@@ -106,95 +176,134 @@ document.addEventListener("DOMContentLoaded", () => {
 
       });
 
-      updateAvailableCount();
-      updateHeroCount();
+
+      updateCounters(block1);
 
     } catch (error) {
 
       console.warn(
-        "No s'han pogut detectar les presentacions:",
+        "Error detectant les presentacions:",
         error
       );
 
     }
+
   }
 
-  function updateAvailableCount() {
 
-    const block =
-      document.querySelector("#bloc-01");
+  function updateCounters(block1) {
 
-    if (!block) {
-      return;
-    }
+    const available =
+      block1.querySelectorAll(
+        ".topic.available"
+      ).length;
 
-    const availableTopics =
-      block.querySelectorAll(".topic.available");
 
-    const totalTopics =
-      block.querySelectorAll(".topic");
+    const total =
+      block1.querySelectorAll(
+        ".topic"
+      ).length;
+
+
+    /*
+     * Actualitzem només el text del Bloc 1.
+     */
 
     const description =
-      block.querySelector(".body > p");
+      block1.querySelector(
+        ".body > p"
+      );
+
 
     if (description) {
       description.textContent =
-        `${availableTopics.length} de ${totalTopics.length} temes disponibles.`;
+        `${available} de ${total} temes disponibles.`;
     }
-  }
 
-  function updateHeroCount() {
+
+    /*
+     * Actualitzem el número de temes disponibles
+     * de la capçalera principal.
+     */
 
     const hero =
-      document.querySelector(".hero aside");
+      document.querySelector(
+        ".hero aside"
+      );
 
-    if (!hero) {
-      return;
+
+    if (hero) {
+
+      const numbers =
+        hero.querySelectorAll("b");
+
+
+      if (numbers.length >= 3) {
+        numbers[2].textContent =
+          available;
+      }
+
     }
 
-    const availableTopics =
-      document.querySelectorAll(".topic.available");
-
-    const numbers =
-      hero.querySelectorAll("b");
-
-    if (numbers.length >= 3) {
-      numbers[2].textContent =
-        availableTopics.length;
-    }
   }
 
+
+  /*
+   * Navegació suau pels enllaços interns.
+   */
+
   const navigationLinks =
-    document.querySelectorAll('a[href^="#"]');
+    document.querySelectorAll(
+      'a[href^="#"]'
+    );
+
 
   navigationLinks.forEach(link => {
 
-    link.addEventListener("click", event => {
+    link.addEventListener(
+      "click",
+      event => {
 
-      const targetId =
-        link.getAttribute("href");
+        const targetId =
+          link.getAttribute("href");
 
-      if (!targetId || targetId === "#") {
-        return;
+
+        if (
+          !targetId ||
+          targetId === "#"
+        ) {
+          return;
+        }
+
+
+        const target =
+          document.querySelector(
+            targetId
+          );
+
+
+        if (!target) {
+          return;
+        }
+
+
+        event.preventDefault();
+
+
+        target.scrollIntoView({
+          behavior: "smooth",
+          block: "start"
+        });
+
       }
-
-      const target =
-        document.querySelector(targetId);
-
-      if (!target) {
-        return;
-      }
-
-      event.preventDefault();
-
-      target.scrollIntoView({
-        behavior: "smooth",
-        block: "start"
-      });
-
-    });
+    );
 
   });
+
+
+  /*
+   * Iniciem la detecció automàtica.
+   */
 
   detectPresentations();
 
