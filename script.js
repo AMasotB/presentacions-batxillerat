@@ -7,7 +7,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const GITHUB_API_URL =
     `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPOSITORY}/contents/?ref=${GITHUB_BRANCH}`;
 
-  async function detectPresentations() {
+  async function detectFiles() {
 
     try {
 
@@ -21,74 +21,110 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const files = await response.json();
 
-      const presentations = files
-        .filter(file =>
-          file.type === "file" &&
-          /^B[1-4]_\d+_.+\.html$/i.test(file.name)
-        )
-        .map(file => {
+      const htmlFiles = files.filter(file =>
+        file.type === "file" &&
+        /\.html$/i.test(file.name)
+      );
 
-          const match =
-            file.name.match(/^B([1-4])_(\d+)_/);
+      detectPresentations(htmlFiles);
+      detectActivities(files);
+      updateCounters();
 
-          return {
-            block: parseInt(match[1], 10),
-            number: parseInt(match[2], 10),
-            filename: file.name
-          };
+    } catch (error) {
 
-        })
-        .filter(Boolean);
+      console.warn(
+        "Error detectant els fitxers de GitHub:",
+        error
+      );
+
+    }
+
+  }
 
 
-      presentations.forEach(presentation => {
+  /* =========================================================
+     PRESENTACIONS
+     Detecta:
+     B1_01_...
+     B1_02_...
+     B2_01_...
+     B3_01_...
+     B4_01_...
+     ========================================================= */
 
-        const blockId =
-          `#bloc-${String(presentation.block).padStart(2, "0")}`;
+  function detectPresentations(files) {
+
+    files
+      .filter(file =>
+        /^B[1-4]_\d+_.+\.html$/i.test(file.name)
+      )
+      .forEach(file => {
+
+        const match =
+          file.name.match(/^B([1-4])_(\d+)_/i);
+
+        if (!match) {
+          return;
+        }
+
+        const blockNumber =
+          parseInt(match[1], 10);
 
         const topicNumber =
-          String(presentation.number).padStart(2, "0");
+          String(
+            parseInt(match[2], 10)
+          ).padStart(2, "0");
 
         const block =
-          document.querySelector(blockId);
+          document.querySelector(
+            `#bloc-${String(blockNumber).padStart(2, "0")}`
+          );
 
         if (!block) {
           return;
         }
 
-        const numberElements =
-          block.querySelectorAll(".topic .num");
+        const topics =
+          block.querySelectorAll(".topic");
 
-        numberElements.forEach(numberElement => {
+        topics.forEach(topic => {
+
+          const number =
+            topic.querySelector(".num");
+
+          if (!number) {
+            return;
+          }
 
           if (
-            numberElement.textContent.trim() !==
+            number.textContent.trim() !==
             topicNumber
           ) {
             return;
           }
 
-          const topic =
-            numberElement.closest(".topic");
+          const filename =
+            file.name;
 
-          if (!topic) {
-            return;
-          }
+          const current =
+            topic.querySelector("a");
 
+          if (current) {
 
-          /*
-           * CORRECCIÓ IMPORTANT:
-           * Si el tema ja és un enllaç, actualitzem
-           * directament el seu href.
-           */
-
-          if (topic.tagName.toLowerCase() === "a") {
-
-            topic.href =
-              presentation.filename;
+            current.href = filename;
+            current.target = "_blank";
+            current.rel = "noopener";
 
             topic.classList.remove("soon");
             topic.classList.add("available");
+
+            const small =
+              topic.querySelector("small");
+
+            if (small) {
+              small.textContent =
+                "Presentació disponible";
+            }
 
             const status =
               topic.querySelector("em");
@@ -98,33 +134,15 @@ document.addEventListener("DOMContentLoaded", () => {
                 "DISPONIBLE";
             }
 
-            const subtitle =
-              topic.querySelector("small");
-
-            if (subtitle) {
-              subtitle.textContent =
-                "Presentació disponible";
-            }
-
             const arrow =
               topic.querySelector("b");
 
             if (arrow) {
-              arrow.textContent =
-                "↗";
+              arrow.textContent = "↗";
             }
 
             return;
           }
-
-
-          /*
-           * Si és un div normal, el convertim
-           * en un enllaç.
-           */
-
-          topic.classList.remove("soon");
-          topic.classList.add("available");
 
           const link =
             document.createElement("a");
@@ -133,7 +151,13 @@ document.addEventListener("DOMContentLoaded", () => {
             topic.className;
 
           link.href =
-            presentation.filename;
+            filename;
+
+          link.target =
+            "_blank";
+
+          link.rel =
+            "noopener";
 
           while (topic.firstChild) {
             link.appendChild(
@@ -141,6 +165,13 @@ document.addEventListener("DOMContentLoaded", () => {
             );
           }
 
+          const small =
+            link.querySelector("small");
+
+          if (small) {
+            small.textContent =
+              "Presentació disponible";
+          }
 
           const status =
             link.querySelector("em");
@@ -150,16 +181,6 @@ document.addEventListener("DOMContentLoaded", () => {
               "DISPONIBLE";
           }
 
-
-          const subtitle =
-            link.querySelector("small");
-
-          if (subtitle) {
-            subtitle.textContent =
-              "Presentació disponible";
-          }
-
-
           const arrow =
             link.querySelector("b");
 
@@ -168,6 +189,8 @@ document.addEventListener("DOMContentLoaded", () => {
               "↗";
           }
 
+          link.classList.remove("soon");
+          link.classList.add("available");
 
           topic.parentNode.replaceChild(
             link,
@@ -178,26 +201,273 @@ document.addEventListener("DOMContentLoaded", () => {
 
       });
 
+  }
 
-      updateCounters();
+
+  /* =========================================================
+     ACTIVITATS
+     
+     Format:
+
+     ACT_B1_01_01_Nom.pdf
+     ACT_B1_01_02_Nom.html
+     ACT_B1_02_01_Nom.pdf
+
+     B1 = bloc
+     01 = tema
+     01 = activitat
+     ========================================================= */
+
+  function detectActivities(files) {
+
+    const activities =
+      files
+        .filter(file =>
+          file.type === "file" &&
+          /^ACT_B[1-4]_\d+_\d+_.+\.(pdf|html)$/i.test(file.name)
+        )
+        .map(file => {
+
+          const match =
+            file.name.match(
+              /^ACT_B([1-4])_(\d+)_(\d+)_(.+)\.(pdf|html)$/i
+            );
+
+          if (!match) {
+            return null;
+          }
+
+          return {
+            block: parseInt(match[1], 10),
+            topic: parseInt(match[2], 10),
+            activity: parseInt(match[3], 10),
+            name: match[4]
+              .replace(/_/g, " "),
+            filename: file.name,
+            extension:
+              match[5].toLowerCase()
+          };
+
+        })
+        .filter(Boolean)
+        .sort((a, b) => {
+
+          if (a.block !== b.block) {
+            return a.block - b.block;
+          }
+
+          if (a.topic !== b.topic) {
+            return a.topic - b.topic;
+          }
+
+          return a.activity - b.activity;
+
+        });
 
 
-    } catch (error) {
+    const activityArticle =
+      findActivityArticle();
 
-      console.warn(
-        "Error detectant les presentacions:",
-        error
+    if (!activityArticle) {
+      return;
+    }
+
+
+    if (activities.length === 0) {
+
+      activityArticle.querySelector("p").textContent =
+        "Encara no hi ha activitats disponibles.";
+
+      return;
+
+    }
+
+
+    const description =
+      activityArticle.querySelector("p");
+
+    if (description) {
+      description.textContent =
+        `${activities.length} activitats disponibles.`;
+    }
+
+
+    let list =
+      activityArticle.querySelector(
+        ".activities-list"
+      );
+
+    if (!list) {
+
+      list =
+        document.createElement("div");
+
+      list.className =
+        "activities-list";
+
+      activityArticle.appendChild(
+        list
       );
 
     }
 
+    list.innerHTML = "";
+
+
+    let currentBlock = null;
+    let currentTopic = null;
+
+
+    activities.forEach(activity => {
+
+      if (
+        currentBlock !== activity.block
+      ) {
+
+        currentBlock =
+          activity.block;
+
+        currentTopic =
+          null;
+
+        const blockTitle =
+          document.createElement("h4");
+
+        blockTitle.textContent =
+          `Bloc ${String(activity.block).padStart(2, "0")}`;
+
+        list.appendChild(
+          blockTitle
+        );
+
+      }
+
+
+      if (
+        currentTopic !== activity.topic
+      ) {
+
+        currentTopic =
+          activity.topic;
+
+        const topicTitle =
+          document.createElement("div");
+
+        topicTitle.className =
+          "activity-topic";
+
+        topicTitle.textContent =
+          `Tema ${String(activity.topic).padStart(2, "0")}`;
+
+        list.appendChild(
+          topicTitle
+        );
+
+      }
+
+
+      const link =
+        document.createElement("a");
+
+      link.href =
+        activity.filename;
+
+      link.target =
+        "_blank";
+
+      link.rel =
+        "noopener";
+
+      link.className =
+        "activity-link";
+
+
+      const number =
+        document.createElement("strong");
+
+      number.textContent =
+        String(activity.activity).padStart(2, "0");
+
+
+      const text =
+        document.createElement("span");
+
+      text.textContent =
+        activity.name;
+
+
+      const type =
+        document.createElement("em");
+
+      if (activity.extension === "pdf") {
+
+        type.textContent =
+          "VEURE / DESCARREGAR ↗";
+
+      } else {
+
+        type.textContent =
+          "OBRIR ACTIVITAT ↗";
+
+      }
+
+
+      link.appendChild(number);
+      link.appendChild(text);
+      link.appendChild(type);
+
+      list.appendChild(
+        link
+      );
+
+    });
+
   }
 
+
+  /* =========================================================
+     TROBAR L'ARTICLE "ACTIVITATS"
+     ========================================================= */
+
+  function findActivityArticle() {
+
+    const articles =
+      document.querySelectorAll(
+        ".resourcesgrid article"
+      );
+
+    for (const article of articles) {
+
+      const title =
+        article.querySelector("h3");
+
+      if (!title) {
+        continue;
+      }
+
+      if (
+        title.textContent
+          .trim()
+          .toLowerCase() ===
+        "activitats"
+      ) {
+        return article;
+      }
+
+    }
+
+    return null;
+
+  }
+
+
+  /* =========================================================
+     COMPTADORS DELS BLOCS
+     ========================================================= */
 
   function updateCounters() {
 
     let totalAvailable = 0;
-
 
     for (
       let blockNumber = 1;
@@ -214,31 +484,29 @@ document.addEventListener("DOMContentLoaded", () => {
         continue;
       }
 
-
       const available =
         block.querySelectorAll(
           ".topic.available"
         ).length;
-
 
       const total =
         block.querySelectorAll(
           ".topic"
         ).length;
 
-
-      totalAvailable += available;
-
+      totalAvailable +=
+        available;
 
       const description =
         block.querySelector(
           ".body > p"
         );
 
-
       if (description) {
+
         description.textContent =
           `${available} de ${total} temes disponibles.`;
+
       }
 
     }
@@ -249,16 +517,16 @@ document.addEventListener("DOMContentLoaded", () => {
         ".hero aside"
       );
 
-
     if (hero) {
 
       const numbers =
         hero.querySelectorAll("b");
 
-
       if (numbers.length >= 3) {
+
         numbers[2].textContent =
           totalAvailable;
+
       }
 
     }
@@ -266,11 +534,14 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
 
+  /* =========================================================
+     NAVEGACIÓ SUAU
+     ========================================================= */
+
   const navigationLinks =
     document.querySelectorAll(
       'a[href^="#"]'
     );
-
 
   navigationLinks.forEach(link => {
 
@@ -281,7 +552,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const targetId =
           link.getAttribute("href");
 
-
         if (
           !targetId ||
           targetId === "#"
@@ -289,20 +559,16 @@ document.addEventListener("DOMContentLoaded", () => {
           return;
         }
 
-
         const target =
           document.querySelector(
             targetId
           );
 
-
         if (!target) {
           return;
         }
 
-
         event.preventDefault();
-
 
         target.scrollIntoView({
           behavior: "smooth",
@@ -315,6 +581,10 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
 
-  detectPresentations();
+  /* =========================================================
+     INICI
+     ========================================================= */
+
+  detectFiles();
 
 });
