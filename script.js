@@ -1,9 +1,11 @@
 const MANIFEST_URL = "manifest.json";
 
-function topicElements() {
-    // Cada .topic (disponible o "soon") ha de portar data-topic="B{bloc}_{NN}"
-    return [...document.querySelectorAll(".topic[data-topic]")];
-}
+const BLOCS = [
+    { id: "bloc-01", label: "Bloc 01 · Catalunya i Espanya al món" },
+    { id: "bloc-02", label: "Bloc 02 · Medi Ambient" },
+    { id: "bloc-03", label: "Bloc 03 · Territori i activitats econòmiques" },
+    { id: "bloc-04", label: "Bloc 04 · Demografia i ciutats" },
+];
 
 async function loadManifest() {
     try {
@@ -20,30 +22,22 @@ function renderPdfBrowser(containerId, kind, manifest) {
     const container = document.getElementById(containerId);
     if (!container) return;
 
-    const topics = topicElements();
     const files = manifest?.[kind] || {};
 
     container.innerHTML = "";
 
-    if (!topics.length) {
-        container.innerHTML = "<p class='empty'>No s'han trobat temes.</p>";
-        return;
-    }
-
-    for (const topicEl of topics) {
-        const topicId = topicEl.dataset.topic;
-        const label = topicEl.querySelector("strong")?.textContent.trim() || topicId;
-        const topicFiles = files[topicId] || [];
+    for (const bloc of BLOCS) {
+        const blocFiles = files[bloc.id] || [];
 
         const details = document.createElement("details");
         const summary = document.createElement("summary");
-        summary.textContent = label;
+        summary.textContent = bloc.label;
         details.appendChild(summary);
 
-        if (topicFiles.length) {
-            topicFiles.forEach(name => {
+        if (blocFiles.length) {
+            blocFiles.forEach(name => {
                 const link = document.createElement("a");
-                link.href = `${kind}/${topicId}/${encodeURIComponent(name)}`;
+                link.href = `${kind}/${bloc.id}/${encodeURIComponent(name)}`;
                 link.target = "_blank";
                 link.rel = "noopener";
                 link.textContent = `📄 ${name}`;
