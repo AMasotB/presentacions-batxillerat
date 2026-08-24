@@ -1,21 +1,25 @@
 #!/usr/bin/env python3
 """
 Genera manifest.json a partir del contingut real de les carpetes
-activitats/ i pau/.
+activitats/ i pau/, organitzades per BLOC (no per tema).
 
 Estructura esperada al repo:
-    activitats/B1_01/qualsevol_nom.pdf
-    activitats/B2_23/una_altra_activitat.pdf
-    pau/B1_01/model_examen.pdf
+    activitats/bloc-01/01_Activitat_Globalitzacio.pdf
+    activitats/bloc-02/23_Activitat_Geotermica.pdf
+    pau/bloc-01/model_examen.pdf
+
+Convenció recomanada pel nom del fitxer (opcional però útil per
+l'alumnat): prefixa'l amb el número de tema dins el bloc, ex.
+"01_Activitat_Globalitzacio.pdf" per identificar-lo com a tema 1.
 
 Resultat (manifest.json a l'arrel del repo):
     {
       "activitats": {
-        "B1_01": ["qualsevol_nom.pdf"],
-        "B2_23": ["una_altra_activitat.pdf"]
+        "bloc-01": ["01_Activitat_Globalitzacio.pdf"],
+        "bloc-02": ["23_Activitat_Geotermica.pdf"]
       },
       "pau": {
-        "B1_01": ["model_examen.pdf"]
+        "bloc-01": ["model_examen.pdf"]
       }
     }
 
@@ -27,6 +31,7 @@ import os
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 KINDS = ["activitats", "pau"]
+BLOCS = ["bloc-01", "bloc-02", "bloc-03", "bloc-04"]
 OUTPUT_PATH = os.path.join(REPO_ROOT, "manifest.json")
 
 
@@ -36,19 +41,19 @@ def scan_kind(kind):
     if not os.path.isdir(base):
         return result
 
-    for topic_id in sorted(os.listdir(base)):
-        topic_path = os.path.join(base, topic_id)
-        if not os.path.isdir(topic_path):
+    for bloc_id in BLOCS:
+        bloc_path = os.path.join(base, bloc_id)
+        if not os.path.isdir(bloc_path):
             continue
 
         files = sorted(
-            f for f in os.listdir(topic_path)
-            if os.path.isfile(os.path.join(topic_path, f))
+            f for f in os.listdir(bloc_path)
+            if os.path.isfile(os.path.join(bloc_path, f))
             and not f.startswith(".")
         )
 
         if files:
-            result[topic_id] = files
+            result[bloc_id] = files
 
     return result
 
