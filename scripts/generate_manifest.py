@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """
 Genera manifest.json a partir del contingut real de les carpetes
-activitats/ i pau/, organitzades per BLOC (no per tema).
+infografies/, activitats/ i apunts/, organitzades per BLOC (no per tema).
 
 Estructura esperada al repo:
+    infografies/bloc-01/Mapa_globalitzacio.html
     activitats/bloc-01/01_Activitat_Globalitzacio.pdf
     activitats/bloc-02/23_Activitat_Geotermica.pdf
-    pau/bloc-01/model_examen.pdf
+    apunts/bloc-01/Resum_globalitzacio.pdf
 
 Convenció recomanada pel nom del fitxer (opcional però útil per
 l'alumnat): prefixa'l amb el número de tema dins el bloc, ex.
@@ -18,8 +19,8 @@ Resultat (manifest.json a l'arrel del repo):
         "bloc-01": ["01_Activitat_Globalitzacio.pdf"],
         "bloc-02": ["23_Activitat_Geotermica.pdf"]
       },
-      "pau": {
-        "bloc-01": ["model_examen.pdf"]
+      "apunts": {
+        "bloc-01": ["Resum_globalitzacio.pdf"]
       }
     }
 
@@ -30,7 +31,7 @@ import json
 import os
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-KINDS = ["activitats", "pau"]
+KINDS = ["infografies", "activitats", "apunts"]
 BLOCS = ["bloc-01", "bloc-02", "bloc-03", "bloc-04"]
 OUTPUT_PATH = os.path.join(REPO_ROOT, "manifest.json")
 
