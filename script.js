@@ -56,8 +56,9 @@ function renderPdfBrowser(containerId, kind, manifest) {
 
 async function init() {
     const manifest = await loadManifest();
+    renderPdfBrowser("infografies-pdf", "infografies", manifest);
     renderPdfBrowser("activitats-pdf", "activitats", manifest);
-    renderPdfBrowser("pau-pdf", "pau", manifest);
+    renderPdfBrowser("apunts-pdf", "apunts", manifest);
 }
 
 init();
