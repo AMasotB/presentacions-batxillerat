@@ -4,8 +4,9 @@ on:
   push:
     branches: [main]
     paths:
+      - "infografies/**"
       - "activitats/**"
-      - "pau/**"
+      - "apunts/**"
       - "scripts/generate_manifest.py"
   workflow_dispatch: {}
 
