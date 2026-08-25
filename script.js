@@ -54,9 +54,34 @@ function renderPdfBrowser(containerId, kind, manifest) {
     }
 }
 
+function renderFlatBrowser(containerId, kind, manifest) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    const files = manifest?.[kind] || [];
+
+    container.innerHTML = "";
+
+    if (files.length) {
+        files.forEach(name => {
+            const link = document.createElement("a");
+            link.href = `${kind}/${encodeURIComponent(name)}`;
+            link.target = "_blank";
+            link.rel = "noopener";
+            link.textContent = `📄 ${name}`;
+            container.appendChild(link);
+        });
+    } else {
+        const empty = document.createElement("p");
+        empty.className = "empty";
+        empty.textContent = "Encara no hi ha documents disponibles.";
+        container.appendChild(empty);
+    }
+}
+
 async function init() {
     const manifest = await loadManifest();
-    renderPdfBrowser("infografies-pdf", "infografies", manifest);
+    renderFlatBrowser("infografies-pdf", "infografies", manifest);
     renderPdfBrowser("activitats-pdf", "activitats", manifest);
     renderPdfBrowser("apunts-pdf", "apunts", manifest);
 }
