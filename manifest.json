@@ -1,17 +1,20 @@
 {
   "infografies": [
+    "Fitxa Europa - Un continent, moltes Europes.pdf",
+    "Mapa mut d'Europa.pdf",
     "MapadEspanyafsicmut.docx.html",
     "MapadeCatalunyafsicmut.docx.html"
   ],
   "activitats": {
     "bloc-01": [
       "01_Activitat  Globalització (COVID + UCRAÏNA).pdf",
-      "01_Activitat  Globalització - adopció internet al món.pdf"
+      "01_Activitat  Globalització - adopció internet al món.pdf",
+      "Glossari del Bloc 1 (activitat).pdf"
     ]
   },
   "apunts": {
     "bloc-01": [
-      "01_Globalitzacio_Apunts.pdf"
+      "Glossari del Bloc 1 (solucionari).pdf"
     ]
   }
 }
